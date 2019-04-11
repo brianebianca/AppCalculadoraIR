@@ -1,0 +1,143 @@
+﻿@{
+    ViewData["Title"] = "Calculadora de IR - ABC Inc";
+}
+
+<!DOCTYPE html>
+<html>
+<head>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            $("button").click(function () {
+                var salario = getVlSalario();
+                if (salario != "") {
+                    $.get("/api/imposto/" + getVlSalario(), function (data, status) {
+                        if (status == "success") {
+                            preencherDivResultado(data);
+                        }
+                    });
+                } else {
+                    $(".divResult").css("visibility", "hidden");
+                    $(".alerta").css("visibility", "visible");
+                }
+            });
+        });
+
+        function getVlSalario() {
+            var salario = $("#txtSalario")[0].value;
+            salario = salario.replace(',', '.');
+            return salario;
+        }
+
+        function preencherDivResultado(data) {
+
+            $(".divResult").css("visibility", "visible");
+            $(".alerta").css("visibility", "hidden");
+
+            var salario = formataMoeda(data.salario);
+            $("#salarioInformado").text(salario);
+
+            var aliquota = formataPorcentagem(data.aliquota);
+            $("#aliquota").text(aliquota);
+
+            var parcelaDeduzir = formataMoeda(data.parcelaDeduzir);
+            $("#parcelaDeduzir").text(parcelaDeduzir);
+
+            var vlRetidoFonte = formataMoeda(data.impostoRetido);
+            $("#vlRetidoFonte").text(vlRetidoFonte);
+
+            var retidoFonte = formataRetidoNaFonte(data);
+            $("#retidoFonte").text(retidoFonte);
+        }
+
+        function formataMoeda(valor) {
+            return valor.toLocaleString('pt-br', { style: 'currency', currency: 'BRL' });
+        }
+
+        function formataMoedaSemCifrao(valor) {
+            return valor.toLocaleString('pt-br', { minimumFractionDigits: 2 });
+        }
+
+        function formataPorcentagem(valor) {
+            var porcentagem = valor * 100;
+            return porcentagem.toLocaleString('pt-br', { minimumFractionDigits: 1 }) + "%";
+        }
+
+        function formataRetidoNaFonte(data) {
+            return " => (" + data.salario + " x " + formataPorcentagem(data.aliquota) + " ) - " + formataMoedaSemCifrao(data.parcelaDeduzir);
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Roboto Slab',sans-serif,Arial,Helvetica;
+        }
+
+        .spanBold {
+            font-weight: bold
+        }
+
+        .spanBlue {
+            color: #3aa8d4;
+        }
+
+        button {
+            background-color: #FFFFFF;
+            border: 1px solid #3aa8d4;
+            border-radius: 2px;
+            color: #3aa8d4;
+        }
+
+        button:hover {
+            background-color: #3aa8d4;
+            color: #FFFFFF;
+        }
+
+        input {
+            background-color: #FFFFFF;
+            border: 1px solid #3aa8d4;
+            border-radius: 2px;
+        }
+
+        .divResult {
+            visibility: hidden;
+        }
+
+        .alerta {
+            color: #f44336;
+            visibility: hidden;
+        }
+
+    </style>
+    <title>Calculadora de IR - ABC Inc</title>
+</head>
+<body>
+    <div>
+        <h3 class="spanBlue">Calculadora de IR</h3>
+        <table>
+            <tr>
+                <td>
+                    Informe o salário:
+                </td>
+                <td>
+                    <input type="number" name="salario" id="txtSalario">
+                </td>
+                <td>
+                    <button>Calcular IR</button>
+                </td>
+                <td>
+                    <span class="alerta">É necessário informar o salário.</span>
+                </td>
+            </tr>
+        </table>
+        <div id="resultadoCalculo" class="divResult">
+            <p>Informações Processadas:</p>
+            <ul>
+                <li><span>Salário Informado: </span><span class="spanBold" id="salarioInformado"></span></li>
+                <li><span>Alíquota: </span><span class="spanBold" id="aliquota"></span></li>
+                <li><span>Parcela a deduzir do IR: </span><span class="spanBold" id="parcelaDeduzir"></span></li>
+                <li><span>Imposto de Renda retido na fonte: </span><span id="vlRetidoFonte" class="spanBold spanBlue"></span><span class="spanBold" id="retidoFonte"></span></li>
+            </ul>
+        </div>
+    </div>
+</body>
+</html>
